@@ -80,7 +80,7 @@ extractInfoOneView <- function(data, keep_info_one_view_column = TRUE) {
   
   ## Extract the data from which the room is available from 
 
-    # a) The date is found after a fixed phrase
+  # a) The date is found after a fixed phrase
   data$available_from <- 
     as.character(
       stringi::stri_match_all_regex(data$info_one_view,
@@ -117,6 +117,19 @@ extractInfoOneView <- function(data, keep_info_one_view_column = TRUE) {
   data$zip <- as.integer(stringi::stri_match_first_regex(data$info_one_view, "[0-9]{5}"))
   
   
+  ## Extract the (raw) string info for the district
+  
+  # The first word of the district name is always found after the first mention of the 
+  # word 'Berlin' in the string.
+  # The next word after that might be part of the district name or not, but most districts can
+  # be identified by the first word alone. The rest of the districts can (to a large degree) be
+  # identified by their ZIP code. This will be done in a separate function.
+  district <- stringi::stri_match_all_regex(data$info_one_view, "Berlin (\\w+)")
+  data$district <- unlist(lapply(district, `[[`, 2))
+  data$district <- as.character(data$district)
+  rm(district)
+  
+  
   ## Extract the address string
   
   # Extracting the address is a bit tricky. The address has a differing length, but is always found
@@ -132,19 +145,6 @@ extractInfoOneView <- function(data, keep_info_one_view_column = TRUE) {
   data$address <- stringi::stri_trim(data$address)
   # Delete 'start_pos' & 'end_pos'
   rm(start_pos, end_pos)
-
-  
-  ## Extract the (raw) string info for the district
-  
-  # The first word of the district name is always found after the first mention of the 
-  # word 'Berlin' in the string.
-  # The next word after that might be part of the district name or not, but most districts can
-  # be identified by the first word alone. The rest of the districts can (to a large degree) be
-  # identified by their ZIP code. This will be done in a separate function.
-  district <- stringi::stri_match_all_regex(data$info_one_view, "Berlin (\\w+)")
-  data$district <- unlist(lapply(district, `[[`, 2))
-  data$district <- as.character(data$district)
-  rm(district)
   
     
   if (!keep_info_one_view_column) data$info_one_view <- NULL
